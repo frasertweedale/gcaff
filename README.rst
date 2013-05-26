@@ -1,6 +1,3 @@
-``gcaff`` - graphical OpenPGP signing assistant
-===============================================
-
 Synopsis
 --------
 
@@ -17,14 +14,10 @@ What is ``gcaff``?
 use case is for signing many keys at once, after a keysigning party
 for example.
 
-
-What are its features?
-----------------------
-
 Features include:
 
 * display photo IDs and select for signing
-* use multiple signing keys at once
+* sign with multiple signing keys in one pass
 * choose the certification level on a per-key basis
 * email each signature separately, only to the associated email
   address
@@ -33,21 +26,21 @@ Features include:
 How does it differ from ``caff``?
 ---------------------------------
 
-``gcaff`` is heavily influenced by caff_.  Apart from the
-obvious, there are a few important differences from ``caff``.
+``gcaff`` is heavily influenced by caff_.  Apart from ``caff`` being
+a command line program and ``gcaff`` having a GUI, there are a few
+important differences from ``caff``:
 
 * ``gcaff`` does not remove uids from keys.  ``caff`` sends only the
   uid that was signed to each email address.  For now, ``gcaff``
-  does not do this, though it does send only the one new signature
-  to each uid.
-* ``gcaff`` sends photo uid or freefrom uid signatures to *all*
+  sends all uids, but only one uid will have the new signature.
+* ``gcaff`` sends photo uid or freeform uid signatures to *all*
   email addresses on a key.  If a uid does not have an email
   address, this "scatter-gun" strategy is used so that the signature
   still has a chance of reaching the key owner.
-* ``gcaff`` has no pinentry mechanism whatsoever.  You must have a
+* ``gcaff`` has no pinentry mechanism; users must have a
   working gpg-agent to use ``gcaff``.
 * ``gcaff`` currently requires the user to supply a file containing
-  keys to be signed; the program does not fetch any keys itself.
+  keys to be signed; no keys are fetched from keyservers.
 
 .. _caff: http://pgp-tools.alioth.debian.org/
 
@@ -65,9 +58,9 @@ exported to a temporary GnuPG keyring during the signing process.
 
 No keys in the user's GnuPG home directory are modified during the
 signing process.  Once signing is complete, all the signatures are
-written to a file whose location is reported to the user, from where
-they may - at the user's discretion - imported into the regular
-keyring.
+written to a file whose location is reported.  The user may import
+keys from this file into her regular keyring.  A future version may
+offer to perform this step for the user.
 
 
 Dependencies
