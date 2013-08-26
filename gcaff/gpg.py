@@ -275,8 +275,8 @@ class GnuPG(object):
     def _list_keys(self, keyids=None, secret=False):
         """Retrieve the given key."""
         # FIXME secret keys are not displaying validity
-        wstat_fd, rstat_fd = os.pipe()
-        wattr_fd, rattr_fd = os.pipe()
+        rstat_fd, wstat_fd = os.pipe()
+        rattr_fd, wattr_fd = os.pipe()
         p = self._popen([
             '--status-fd', str(wstat_fd),
             '--attribute-fd', str(wattr_fd),
