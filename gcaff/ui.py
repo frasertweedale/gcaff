@@ -58,8 +58,7 @@ class SigningAssistant(gtk.Assistant):
         )
 
         keys = (
-            # FIXME remove constraint
-            key for key in tmpgpg.list_keys()[:15]
+            key for key in tmpgpg.list_keys()
             if key not in signing_keys
         )
 
