@@ -201,13 +201,11 @@ class GnuPG(object):
         self.secret_keyring = os.path.join(secdir, 'secring.gpg')
 
     def _popen(self, args):
-        #homedir = ['--homedir', self.homedir] if self.homedir else []
         args = [
             'gpg',
             '--no-tty',
             '--no-auto-check-trustdb',
             '--secret-keyring', self.secret_keyring,
-        #] + homedir + args
         ] + args
         logger.info('execute gpg: GNUPGHOME={} {}'.format(self.homedir, args))
         return subprocess.Popen(
@@ -361,7 +359,6 @@ class GnuPG(object):
             Integer uid.  Note that uids count from ZERO.
 
         """
-        # TODO export to temporary keyring to sign
         # TODO configure cert-digest-algo
         self.uid = uid
         self.state = self.STATE_MINIMIZE if minimize else self.STATE_INIT
