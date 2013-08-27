@@ -304,9 +304,10 @@ class GnuPG(object):
                 seen += 1
             if line.startswith('fpr'):
                 kwargs['fingerprint'] = line.split(':')[9]
-            elif line.startswith('uid'):
+            elif line.startswith('uid') or line.startswith('pub'):
                 _, validity, _, _, _, _, _, _, _, data = line.split(':')[:10]
-                kwargs['uids'].append(TextUid(validity, data))
+                if data:
+                    kwargs['uids'].append(TextUid(validity, data))
             elif line.startswith('uat'):
                 # if uat lines that are NOT jpeg images are listed,
                 # this code is wrong and needs fixing.  But I have
