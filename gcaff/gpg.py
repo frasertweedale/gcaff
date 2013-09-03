@@ -419,3 +419,23 @@ class GnuPG(object):
             return 'save'
         else:
             raise RuntimeError('gpg state violation')
+
+
+class AgentError(StandardError):
+    pass
+
+
+def test_agent():
+    """Try to talk to the agent and raise an error if we can't."""
+    try:
+        p = subprocess.Popen(
+            ['gpg-connect-agent'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            raise AgentError(stderr)
+    except OSError as e:
+        raise AgentError(str(e))

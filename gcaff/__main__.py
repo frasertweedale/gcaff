@@ -25,6 +25,32 @@ from . import gpg
 from . import ui
 
 
+def run_assistant(args):
+    homegpg = gpg.GnuPG()
+
+    tmpgpgdir = tempfile.mkdtemp()
+    tmpgpg = gpg.GnuPG(tmpgpgdir)
+    tmpgpg.import_keys(args.keyring.read(), minimal=True)
+
+    window = ui.SigningAssistant(homegpg, tmpgpg)
+    window.show_all()
+    gtk.main()
+
+    logging.warn('remove tmpgpgdir: {}'.format(tmpgpgdir))
+    shutil.rmtree(tmpgpgdir)
+
+
+def run_error(msg):
+    window = gtk.MessageDialog(
+        type=gtk.MESSAGE_ERROR,
+        buttons=gtk.BUTTONS_CLOSE
+    )
+    window.connect('response', gtk.main_quit)
+    window.set_property('text', 'Could not connect to gpg-agent')
+    window.set_property('secondary-text', msg)
+    window.show_all()
+    gtk.main()
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -38,18 +64,12 @@ def main():
     level = getattr(logging, args.logging.upper(), 'WARNING')
     logging.basicConfig(level=level)
 
-    homegpg = gpg.GnuPG()
+    try:
+        gpg.test_agent()
+        run_assistant(args)
+    except gpg.AgentError as e:
+        run_error(e.args[0])
 
-    tmpgpgdir = tempfile.mkdtemp()
-    tmpgpg = gpg.GnuPG(tmpgpgdir)
-    tmpgpg.import_keys(args.keyring.read(), minimal=True)
-
-    window = ui.SigningAssistant(homegpg, tmpgpg)
-    window.show_all()
-    gtk.main()
-
-    logging.warn('remove tmpgpgdir: {}'.format(tmpgpgdir))
-    shutil.rmtree(tmpgpgdir)
 
 if __name__ == '__main__':
     main()
