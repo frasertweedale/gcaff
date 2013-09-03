@@ -43,7 +43,6 @@ def main():
     tmpgpgdir = tempfile.mkdtemp()
     tmpgpg = gpg.GnuPG(tmpgpgdir)
     tmpgpg.import_keys(args.keyring.read(), minimal=True)
-    # TODO import chosen signing key into tmpgpg
 
     window = ui.SigningAssistant(homegpg, tmpgpg)
     window.show_all()
