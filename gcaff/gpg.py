@@ -154,7 +154,7 @@ class Key(object):
 
     def email(self):
         """Get a usable email address for this key.
-        
+
         Return a list containing the first email address found on a
         valid UID, or the empty list if no such address is found.
 

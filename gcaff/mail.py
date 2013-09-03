@@ -90,6 +90,7 @@ def create_message(
     msg['User-Agent'] = version.USER_AGENT
     return _from, _tos, msg.as_string()
 
+
 def send_messages(msgs):
     """Generator that sends emails and yields progress."""
     server = smtplib.SMTP('localhost')
@@ -97,6 +98,7 @@ def send_messages(msgs):
         server.sendmail(_from, _tos, msg)
         yield i + 1
     server.quit()
+
 
 def _create_message(signee_keyid, signee_uid, signer_name, payload):
     text_plain = email.mime.text.MIMEText(
@@ -111,12 +113,13 @@ def _create_message(signee_keyid, signee_uid, signer_name, payload):
     application_pgp_keys = email.mime.application.MIMEApplication(
         payload,
         'pgp-keys',
-        email.encoders.encode_7or8bit   
+        email.encoders.encode_7or8bit
     )
     multipart = email.mime.multipart.MIMEMultipart('mixed')
     multipart.attach(text_plain)
     multipart.attach(application_pgp_keys)
     return str(multipart)
+
 
 def _encrypt_message(gpg, keyid, cleartext):
     application_pgp_encrypted = email.mime.application.MIMEApplication(

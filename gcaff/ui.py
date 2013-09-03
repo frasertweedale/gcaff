@@ -51,7 +51,7 @@ class SigningAssistant(gtk.Assistant):
         self.signing_key_page = SigningKeyPage(signing_keys)
         self.append_page(self.signing_key_page)
         self.set_page_type(self.signing_key_page, gtk.ASSISTANT_PAGE_CONTENT)
-        self.set_page_title(self.signing_key_page, 'Select the signing key(s).')
+        self.set_page_title(self.signing_key_page, 'Select signing key(s).')
         self.signing_key_page.connect(
             'signing-keys-changed',
             self.on_signing_keys_changed
@@ -120,8 +120,9 @@ class SigningAssistant(gtk.Assistant):
 
 class SigningKeyPage(gtk.VBox):
     __gsignals__ = {
-        'signing-keys-changed':
-            (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (object,)),
+        'signing-keys-changed': (
+            gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (object,)
+        ),
     }
 
     def __init__(self, keys):
@@ -335,6 +336,7 @@ def sign_and_send(tmpgpg, uids, conn):
         conn.send((c / n, (True, None)))
     conn.send((1.0, (True, True)))
 
+
 @contextlib.contextmanager
 def _closing_mkstemp():
     fd, name = tempfile.mkstemp()
@@ -342,6 +344,7 @@ def _closing_mkstemp():
         yield fd, name
     finally:
         os.close(fd)
+
 
 def _write_signatures(signatures):
     with _closing_mkstemp() as (fd, name):
@@ -351,10 +354,8 @@ def _write_signatures(signatures):
 
 class ProgressPage(gtk.VBox):
     __gsignals__ = {
-        'sign-complete':
-            (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (str,)),
-        'send-complete':
-            (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),
+        'sign-complete': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (str,)),
+        'send-complete': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),
     }
 
     def __init__(self, usergpg, tmpgpg):

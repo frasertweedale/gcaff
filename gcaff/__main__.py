@@ -54,10 +54,10 @@ def run_error(msg):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--keyring', type=argparse.FileType(), required=True,
+    parser.add_argument(
+        '--keyring', type=argparse.FileType(), required=True,
         help='keyring containing keys to be signed')
-    parser.add_argument('--logging', default='WARNING',
-        help='set log level')
+    parser.add_argument('--logging', default='WARNING', help='set log level')
 
     args = parser.parse_args()
 
