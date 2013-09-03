@@ -17,11 +17,13 @@
 import argparse
 import logging
 import shutil
+import socket
 import tempfile
 
 import gtk
 
 from . import gpg
+from . import mail
 from . import ui
 
 
@@ -40,14 +42,14 @@ def run_assistant(args):
     shutil.rmtree(tmpgpgdir)
 
 
-def run_error(msg):
+def run_error(text, secondary_text):
     window = gtk.MessageDialog(
         type=gtk.MESSAGE_ERROR,
         buttons=gtk.BUTTONS_CLOSE
     )
     window.connect('response', gtk.main_quit)
-    window.set_property('text', 'Could not connect to gpg-agent')
-    window.set_property('secondary-text', msg)
+    window.set_property('text', text)
+    window.set_property('secondary-text', secondary_text)
     window.show_all()
     gtk.main()
 
@@ -66,9 +68,12 @@ def main():
 
     try:
         gpg.test_agent()
+        mail.test_smtp()
         run_assistant(args)
     except gpg.AgentError as e:
-        run_error(e.args[0])
+        run_error('Could not connect to gpg-agent', e.args[0])
+    except socket.error as e:
+        run_error('Could not connect to local mailer', str(e))
 
 
 if __name__ == '__main__':

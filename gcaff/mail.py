@@ -61,6 +61,11 @@ Regards,
 """
 
 
+def test_smtp():
+    server = smtplib.SMTP('localhost')
+    server.quit()
+
+
 def create_message(
     gpg,
     payload,
