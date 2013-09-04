@@ -38,7 +38,7 @@ important differences from ``caff``:
   address, this "scatter-gun" strategy is used so that the signature
   still has a chance of reaching the key owner.
 * ``gcaff`` has no pinentry mechanism; users must have a
-  working gpg-agent to use ``gcaff``.
+  working ``gpg-agent`` to use ``gcaff``.
 * ``gcaff`` currently requires the user to supply a file containing
   keys to be signed; no keys are fetched from keyservers.
 
@@ -66,10 +66,47 @@ offer to perform this step for the user.
 Dependencies
 ------------
 
-* GnuPG (using gpg-agent)
+* GnuPG and gpg-agent
 * Python 2.7
 * PyGTK >=2, <3
 * a local mailer (SMTP), e.g. sendmail
+
+Debian / Ubuntu
+^^^^^^^^^^^^^^^
+
+Install Python 2.7 and PyGTK in the normal way for your operating
+system.  Note that on many systems PyGTK cannot be installed with
+``pip``.
+
+To install dependencies on a Debian or Ubuntu system (or other
+systems using APT)::
+
+  sudo apt-get install gnupg gnupg-agent postfix
+
+If ``gnupg-agent`` was not previously installed you will probably
+need to log out and log in again to ensure that ``gpg-agent`` is
+running and the appropriate environment variables are set.
+
+During the postfix configuration dialog ensure you select **Internet
+Site** as the "General type of mail configuration".  If postfix is
+not accepting mail you can run the configuration again::
+
+  sudo dpkg-reconfigure postfix
+
+
+Installation
+------------
+
+To install for all users, on a Unix system::
+
+  sudo pip install gcaff
+
+To perform an installation to user site-packages::
+
+  pip install gcaff --user
+
+Ensure that the user site ``bin/`` directory is on the ``PATH`` if
+installing to user site-packages.
 
 
 License
