@@ -204,6 +204,7 @@ class GnuPG(object):
         args = [
             'gpg',
             '--no-tty',
+            '--use-agent',
             '--no-auto-check-trustdb',
             '--secret-keyring', self.secret_keyring,
         ] + args
