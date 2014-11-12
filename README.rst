@@ -1,15 +1,3 @@
-Synopsis
---------
-
-::
-
-    pip install gcaff
-    gcaff --keyring keys-to-sign.asc
-
-
-What is ``gcaff``?
-------------------
-
 ``gcaff`` is a graphical tool for signing OpenPGP keys.  Its main
 use case is for signing many keys at once, after a keysigning party
 for example.
@@ -21,6 +9,8 @@ Features include:
 * choose the certification level on a per-key basis
 * email each signature separately, only to the associated email
   address
+
+.. image:: screenshot.png
 
 
 How does it differ from ``caff``?
@@ -107,6 +97,14 @@ To perform an installation to user site-packages::
 
 Ensure that the user site ``bin/`` directory is on the ``PATH`` if
 installing to user site-packages.
+
+
+Usage
+-----
+
+::
+
+    gcaff --keyring keys-to-sign.asc
 
 
 License
