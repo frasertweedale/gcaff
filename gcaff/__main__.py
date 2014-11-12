@@ -16,6 +16,7 @@
 
 import argparse
 import logging
+import os
 import shutil
 import socket
 import tempfile
@@ -33,6 +34,10 @@ def run_assistant(args):
     tmpgpgdir = tempfile.mkdtemp()
     tmpgpg = gpg.GnuPG(tmpgpgdir)
     tmpgpg.import_keys(args.keyring.read(), minimal=True)
+
+    agent_socket = homegpg.agent_socket()
+    if agent_socket:
+        os.symlink(agent_socket, os.path.join(tmpgpgdir, 'S.gpg-agent'))
 
     window = ui.SigningAssistant(homegpg, tmpgpg)
     window.show_all()

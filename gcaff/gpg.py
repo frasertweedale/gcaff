@@ -221,6 +221,11 @@ class GnuPG(object):
             stderr=subprocess.PIPE
         )
 
+    def agent_socket(self):
+        """Return path to agent socket if using the standard socket."""
+        path = os.path.join(self.homedir, 'S.gpg-agent')
+        return path if os.path.exists(path) else None
+
     def import_keys(self, data, minimal=False):
         """Import keys from the given data.
 
