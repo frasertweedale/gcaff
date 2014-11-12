@@ -13,24 +13,26 @@ Features include:
 .. image:: screenshot.png
 
 
-How does it differ from ``caff``?
----------------------------------
+Differences from ``caff``
+-------------------------
 
-``gcaff`` is heavily influenced by caff_.  Apart from ``caff`` being
-a command line program and ``gcaff`` having a GUI, there are a few
-important differences from ``caff``:
+``gcaff`` is inspried by caff_, a command-line signing assistant.
+Apart from ``caff`` being a CLI program and ``gcaff`` having a GUI,
+there are some important differences:
 
 * ``gcaff`` does not remove uids from keys.  ``caff`` sends only the
-  uid that was signed to each email address.  For now, ``gcaff``
-  sends all uids, but only one uid will have the new signature.
-* ``gcaff`` sends photo uid or freeform uid signatures to *all*
-  email addresses on a key.  If a uid does not have an email
-  address, this "scatter-gun" strategy is used so that the signature
-  still has a chance of reaching the key owner.
-* ``gcaff`` has no pinentry mechanism; users must have a
-  working ``gpg-agent`` to use ``gcaff``.
-* ``gcaff`` currently requires the user to supply a file containing
-  keys to be signed; no keys are fetched from keyservers.
+  uid that was signed to each email address.  ``gcaff`` sends all
+  uids, but only one uid will have the new signature.
+
+* ``gcaff`` sends signatures for photo uids or uids without an email
+  address to *all email addresses* on the key.  Signatures on
+  regular uids are sent to the corresponding email address only.
+
+* ``gcaff`` has no pinentry mechanism; users must have a working
+  ``gpg-agent`` to use ``gcaff``.
+
+* ``gcaff`` requires the user to supply a file containing keys to be
+  signed; no keys are fetched from keyservers.
 
 .. _caff: http://pgp-tools.alioth.debian.org/
 
@@ -38,19 +40,20 @@ important differences from ``caff``:
 Cryptographic concerns
 ----------------------
 
-``gcaff`` currently signs keys using the SHA256 digest.  Future work
-may allow users to choose a digest based on the capabilities of
-their GnuPG implementation.
+``gcaff`` signs keys using the SHA256 digest.  Future work could
+allow users to choose a different digest for signing.  Patches are
+welcome!
 
-**Under no circumstances** are any secret keys exported from the
-user's GnuPG home directory.  The corresponding public keys are
-exported to a temporary GnuPG keyring during the signing process.
+**Secret keys are never exported** from the GnuPG home directory,
+however, the corresponding public keys are exported to a temporary
+GnuPG keyring during the signing process.
 
 No keys in the user's GnuPG home directory are modified during the
 signing process.  Once signing is complete, all the signatures are
-written to a file whose location is reported.  The user may import
-keys from this file into her regular keyring.  A future version may
-offer to perform this step for the user.
+written to a file whose location is reported.  The user may
+(manually) import keys from this file into her regular keyring.  A
+future version could offer to perform this step for the user.
+Contributions are welcome.
 
 
 Dependencies
