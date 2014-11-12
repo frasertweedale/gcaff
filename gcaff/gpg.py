@@ -303,7 +303,7 @@ class GnuPG(object):
                 _, _, kwargs['length'], kwargs['algorithm'] \
                     = line.split(':')[:4]
                 seen += 1
-            if line.startswith('fpr'):
+            if line.startswith('fpr') and 'fingerprint' not in kwargs:
                 kwargs['fingerprint'] = line.split(':')[9]
             elif line.startswith('uid') or line.startswith('pub'):
                 _, validity, _, _, _, _, _, _, _, data = line.split(':')[:10]
