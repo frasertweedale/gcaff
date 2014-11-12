@@ -69,8 +69,12 @@ ALGORITHM = {
     b'1':  'RSA',
     b'16': 'Elgamal (encrypt only)',
     b'17': 'DSA',
+    b'18': 'ECDH',
+    b'19': 'ECDSA',
     b'20': 'Elgamal (sign and encrypt)',
 }
+
+ECC_ALGORITHMS = {'18', '19'}
 
 
 class Uid(object):
@@ -300,8 +304,12 @@ class GnuPG(object):
                 if seen:
                     keys.append(Key(**kwargs))
                     kwargs = {'uids': []}
-                _, _, kwargs['length'], kwargs['algorithm'] \
-                    = line.split(':')[:4]
+                fields = line.split(':')
+                kwargs['algorithm'] = fields[3]
+                if kwargs['algorithm'] in ECC_ALGORITHMS:
+                    kwargs['length'] = fields[16]  # ECC curve name
+                else:
+                    kwargs['length'] = fields[2]
                 seen += 1
             if line.startswith('fpr') and 'fingerprint' not in kwargs:
                 kwargs['fingerprint'] = line.split(':')[9]
