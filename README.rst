@@ -134,6 +134,9 @@ Contributing
 
 Bug reports, general feedback, patches and translations are welcome.
 
+A list of desirable enhancements can be found in the file
+``TODO.rst``.
+
 To submit a patch, please use ``git send-email`` or generate a
 pull/merge request.  Write a `well formed commit message`_.  If your
 patch is nontrivial, add a copyright notice (or, if appropriate,
