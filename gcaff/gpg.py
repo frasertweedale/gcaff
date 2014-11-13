@@ -194,6 +194,16 @@ class GnuPG(object):
     signing keys do not have to be moved around.
 
     """
+    def _probe():
+        for exe in ['gpg2', 'gpg']:
+            try:
+                return exe, subprocess.check_output([exe, '--version'])
+            except OSError as e:
+                exc = e
+        raise e
+
+    exe, version = _probe()
+
     def __init__(self, homedir=None):
         # determine the user's normal GNUPGHOME, where we expect
         # to find signing keys
@@ -206,7 +216,7 @@ class GnuPG(object):
 
     def _popen(self, args):
         args = [
-            'gpg',
+            self.exe,
             '--no-tty',
             '--use-agent',
             '--no-auto-check-trustdb',
