@@ -86,6 +86,16 @@ not accepting mail you can run the configuration again::
 
   sudo dpkg-reconfigure postfix
 
+Fedora
+^^^^^^
+
+Fedora 20 and later releases do not have an MTA installed by
+default.  To install and configure::
+
+  sudo yum install -y postfix
+  sudo systemctl start postfix
+  sudo systemctl enable postfix
+
 
 Installation
 ------------
