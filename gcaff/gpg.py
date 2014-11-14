@@ -72,9 +72,10 @@ ALGORITHM = {
     b'18': 'ECDH',
     b'19': 'ECDSA',
     b'20': 'Elgamal (sign and encrypt)',
+    b'22': 'EdDSA',
 }
 
-ECC_ALGORITHMS = {'18', '19'}
+ECC_ALGORITHMS = {'18', '19', '22'}
 
 
 class Uid(object):
