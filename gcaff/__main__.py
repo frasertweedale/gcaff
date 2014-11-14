@@ -33,11 +33,14 @@ def run_assistant(args):
 
     tmpgpgdir = tempfile.mkdtemp()
     tmpgpg = gpg.GnuPG(tmpgpgdir)
-    tmpgpg.import_keys(args.keyring.read(), minimal=True)
 
+    # link temporary homedir to existing agent
     agent_socket = homegpg.agent_socket()
     if agent_socket:
         os.symlink(agent_socket, os.path.join(tmpgpgdir, 'S.gpg-agent'))
+
+    # import signing candidates
+    tmpgpg.import_keys(args.keyring.read(), minimal=True)
 
     window = ui.SigningAssistant(homegpg, tmpgpg)
     window.show_all()
