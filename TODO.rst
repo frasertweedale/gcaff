@@ -1,9 +1,20 @@
+Bugs
+----
+
+- Handle signing failure properly (user cancel or incorrect
+  passphrase).
+
+
 Signing
 -------
 
 - Allow user to choose digest algo (from reasonable values).
 
 - One-button import of signatures into primary keyring.
+
+- Implement alternative ways to specify signing candidates (e.g.,
+  supply keyids in command line args or GUI and import from
+  keyserver)
 
 
 Mailer
