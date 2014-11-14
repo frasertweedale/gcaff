@@ -178,7 +178,12 @@ class Key(object):
         return [email] if email else self.emails()
 
     def human_algorithm(self):
-        return ALGORITHM.get(self.algorithm, '<unknown algorithm>')
+        return '{} ({}{})'.format(
+            ALGORITHM.get(self.algorithm, '<unknown algorithm>'),
+            self.length,
+            '-bit' if self.algorithm not in ECC_ALGORITHMS else ''
+        )
+
 
     def human_fingerprint(self):
         fpr = self.fingerprint

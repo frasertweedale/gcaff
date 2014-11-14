@@ -128,14 +128,9 @@ class SigningKeyPage(gtk.VBox):
     def __init__(self, keys):
         super(SigningKeyPage, self).__init__()
 
-        self.model = gtk.ListStore(bool, str, str, str)
+        self.model = gtk.ListStore(bool, str, str)
         for key in keys:
-            self.model.append((
-                False,
-                key.length,
-                key.human_algorithm(),
-                key.keyid,
-            ))
+            self.model.append((False, key.human_algorithm(), key.keyid))
 
         treeview = gtk.TreeView(self.model)
         self.pack_start(treeview)
@@ -148,26 +143,20 @@ class SigningKeyPage(gtk.VBox):
         treeview.append_column(use_col)
 
         text_renderer = gtk.CellRendererText()
-        length_col = gtk.TreeViewColumn('Length')
-        length_col.pack_start(text_renderer, True)
-        length_col.set_attributes(text_renderer, text=1)
-        treeview.append_column(length_col)
-
-        text_renderer = gtk.CellRendererText()
         algo_col = gtk.TreeViewColumn('Algorithm')
         algo_col.pack_start(text_renderer, True)
-        algo_col.set_attributes(text_renderer, text=2)
+        algo_col.set_attributes(text_renderer, text=1)
         treeview.append_column(algo_col)
 
         text_renderer = gtk.CellRendererText()
         keyid_col = gtk.TreeViewColumn('Key ID')
         keyid_col.pack_start(text_renderer, True)
-        keyid_col.set_attributes(text_renderer, text=3)
+        keyid_col.set_attributes(text_renderer, text=2)
         treeview.append_column(keyid_col)
 
     def on_toggle(self, cell, path, model):
         model[path][0] = not model[path][0]
-        signing_keys = [keyid for checked, _, _, keyid in model if checked]
+        signing_keys = [keyid for checked, _, keyid in model if checked]
         self.emit('signing-keys-changed', signing_keys)
 
 
