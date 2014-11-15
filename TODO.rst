@@ -1,10 +1,3 @@
-Bugs
-----
-
-- Handle signing failure properly (user cancel or incorrect
-  passphrase).
-
-
 Signing
 -------
 

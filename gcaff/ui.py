@@ -409,9 +409,19 @@ class ProgressPage(gtk.VBox):
                 return False
 
             elif msg[0] == MSG_ERR_FATAL:
-                # TODO display error message
-                # return False
-                pass
+                dialog = gtk.MessageDialog(
+                    None,
+                    gtk.DIALOG_MODAL,
+                    gtk.MESSAGE_ERROR,
+                    gtk.BUTTONS_CLOSE
+                )
+                dialog.set_property('text',
+                    "Could not sign all selected UIDs.")
+                dialog.set_property('secondary-text',
+                    "The program will now exit.")
+                dialog.connect('response', gtk.main_quit)
+                dialog.show()
+                return False
 
             elif msg[0] == MSG_ERR_RECOVERABLE:
                 # TODO accumulate recoverable errors for later reporting
