@@ -372,7 +372,8 @@ class GnuPG(object):
                     images[-1] += data[16:]
         return images
 
-    STATE_MINIMIZE, STATE_INIT, STATE_UID, STATE_SIGN, STATE_SAVE = range(5)
+    STATE_MINIMIZE, STATE_INIT, STATE_UID, STATE_SIGN, \
+        STATE_GOODPW, STATE_BADPW, STATE_NOPW, STATE_DONE = range(8)
 
     def sign_key_uid(
         self, signkey, keyid, uid, cert_level=0, digest='SHA256',
@@ -405,26 +406,28 @@ class GnuPG(object):
         while p.poll() is None:
             line = p.stdout.readline().strip()
             logger.debug(line)
-            response = self._get_response(line)
+            response = self._get_response(keyid, line)
             if response is not None:
                 logger.debug(response)
                 p.stdin.write(response + '\n')
             # TODO set a max number of iteration and die if
             # exceeded, so we don't get stuck in loop?
         logger.info('gpg process exited code {}'.format(p.returncode))
-        if p.returncode != 0:
+        if self.state != self.STATE_DONE:
             raise RuntimeError("Bad passphrase")
 
-    def _get_response(self, line):
+    def _get_response(self, keyid, line):
         msg = line[9:]  # strip "[GNUPG:] "
         lut = {
             "GOT_IT": None,
             "GET_LINE keyedit.prompt": self._get_line_keyedit_prompt,
             "GET_LINE sign_uid.class": '',  # accept default
             "GET_BOOL sign_uid.okay": 'y',
+            "BAD_PASSPHRASE {}".format(keyid): self._on_bad_passphrase,
+            "MISSING_PASSPHRASE": self._on_missing_passphrase,
+            "GOOD_PASSPHRASE": self._on_good_passphrase,
             # "USERID_HINT <full user id>"
             # "NEED_PASSPHRASE <long keyid> <longkeyid> 1 0"
-            # "BAD_PASSPHRASE <long keyid>" <-- long keyid; exit code 2
             # "ALREADY_SIGNED <long keyid>" <-- exit code 0
         }
         try:
@@ -444,11 +447,22 @@ class GnuPG(object):
         elif self.state == self.STATE_UID:
             self.state = self.STATE_SIGN
             return 'sign'
-        elif self.state == self.STATE_SIGN:
-            self.state = self.STATE_SAVE
+        elif self.state in {self.STATE_BADPW, self.STATE_NOPW}:
+            return 'quit'
+        elif self.state == self.STATE_GOODPW:
+            self.state = self.STATE_DONE
             return 'save'
         else:
             raise RuntimeError('gpg state violation')
+
+    def _on_bad_passphrase(self):
+        self.state = self.STATE_BADPW
+
+    def _on_missing_passphrase(self):
+        self.state = self.STATE_NOPW
+
+    def _on_good_passphrase(self):
+        self.state = self.STATE_GOODPW
 
 
 class AgentError(StandardError):
