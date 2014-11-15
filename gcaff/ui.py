@@ -289,17 +289,15 @@ def sign_and_send(tmpgpg, uids, conn):
             logger.info('got signature: {}'.format(signature))
         except:
             logger.exception('error signing key: {}'.format(signargs))
-            signature = None
+            conn.send((MSG_ERR_FATAL,))
+            return
         signatures.append(signature)
         c += 1
-        conn.send((
-            c / n,
-            (True, None) if signature is not None else (False, 'sig fail')
-        ))
+        conn.send((MSG_PROGRESS, c / n))
 
     sigfile = _write_signatures(signatures)
     logger.warn('wrote signatures to file: {}'.format(sigfile))
-    conn.send((None, sigfile))
+    conn.send((MSG_DONE_SIGNING, sigfile))
 
     def _create_message(sig, mailargs):
         try:
@@ -317,12 +315,13 @@ def sign_and_send(tmpgpg, uids, conn):
     logger.info('failed to create {} emails'.format(len(bad_emails)))
     for e in bad_emails:
         c += 1
-        conn.send((c / n, (False, e)))
+        conn.send((MSG_PROGRESS, c / n))
     logger.info('sending {} emails'.format(len(good_emails)))
     for i in mail.send_messages(good_emails):
         c += 1
-        conn.send((c / n, (True, None)))
-    conn.send((1.0, (True, True)))
+        conn.send((MSG_PROGRESS, c / n))
+    conn.send((MSG_PROGRESS, 1.0))
+    conn.send((MSG_DONE_SENDING,))
 
 
 @contextlib.contextmanager
@@ -338,6 +337,10 @@ def _write_signatures(signatures):
     with _closing_mkstemp() as (fd, name):
         os.write(fd, '\n'.join(sig for sig in signatures if sig))
         return name
+
+
+MSG_PROGRESS, MSG_DONE_SIGNING, MSG_DONE_SENDING, \
+    MSG_ERR_FATAL, MSG_ERR_RECOVERABLE = range(5)
 
 
 class ProgressPage(gtk.VBox):
@@ -393,19 +396,27 @@ class ProgressPage(gtk.VBox):
 
     def on_check(self, conn):
         while conn.poll():
-            fraction, payload = conn.recv()
-            if fraction is None:
-                # status message
-                logger.info('SIGNING COMPLETE')
-                self.emit('sign-complete', payload)
-            else:
-                # progress message
-                self.progress_bar.set_fraction(fraction)
-                if not payload[0]:  # error
-                    logger.error(repr(payload[1]))
-                if fraction >= 1:
-                    self.emit('send-complete')
-                    return False
+            msg = conn.recv()
+
+            if msg[0] == MSG_PROGRESS:
+                self.progress_bar.set_fraction(msg[1])
+
+            elif msg[0] == MSG_DONE_SIGNING:
+                self.emit('sign-complete', msg[1])
+
+            elif msg[0] == MSG_DONE_SENDING:
+                self.emit('send-complete')
+                return False
+
+            elif msg[0] == MSG_ERR_FATAL:
+                # TODO display error message
+                # return False
+                pass
+
+            elif msg[0] == MSG_ERR_RECOVERABLE:
+                # TODO accumulate recoverable errors for later reporting
+                pass
+
         return True
 
     def on_sign_complete(self, page, sigfile):
