@@ -64,7 +64,6 @@ class SigningAssistant(gtk.Assistant):
 
         self.uid_selectors = []
         for key in keys:
-            # TODO skip signing key
             uid_selector = UidSelector(key)
             self.append_page(uid_selector)
             self.set_page_type(uid_selector, gtk.ASSISTANT_PAGE_CONTENT)
