@@ -20,6 +20,7 @@ import contextlib
 import logging
 import multiprocessing
 import os
+import smtplib
 import tempfile
 
 import gobject
@@ -287,9 +288,8 @@ def sign_and_send(tmpgpg, uids, conn):
             tmpgpg.sign_key_uid(*signargs, minimize=True)
             signature = tmpgpg.export_keys([signargs[1]])
             logger.info('got signature: {}'.format(signature))
-        except:
-            logger.exception('error signing key: {}'.format(signargs))
-            conn.send((MSG_ERR_FATAL,))
+        except RuntimeError as e:
+            conn.send((MSG_ERR_FATAL, "Failed to sign keys", e))
             return
         signatures.append(signature)
         c += 1
@@ -317,9 +317,12 @@ def sign_and_send(tmpgpg, uids, conn):
         c += 1
         conn.send((MSG_PROGRESS, c / n))
     logger.info('sending {} emails'.format(len(good_emails)))
-    for i in mail.send_messages(good_emails):
-        c += 1
-        conn.send((MSG_PROGRESS, c / n))
+    try:
+        for i in mail.send_messages(good_emails):
+            c += 1
+            conn.send((MSG_PROGRESS, c / n))
+    except smtplib.SMTPException as e:
+        conn.send((MSG_ERR_FATAL, "Failed to send email", e))
     conn.send((MSG_PROGRESS, 1.0))
     conn.send((MSG_DONE_SENDING,))
 
@@ -416,9 +419,8 @@ class ProgressPage(gtk.VBox):
                     gtk.BUTTONS_CLOSE
                 )
                 dialog.set_property('text',
-                    "Could not sign all selected UIDs.")
-                dialog.set_property('secondary-text',
-                    "The program will now exit.")
+                    "{}. The program will now exit.".format(msg[1]))
+                dialog.set_property('secondary-text', repr(msg[2]))
                 dialog.connect('response', gtk.main_quit)
                 dialog.show()
                 return False

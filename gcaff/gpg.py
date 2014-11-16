@@ -413,8 +413,12 @@ class GnuPG(object):
             # TODO set a max number of iteration and die if
             # exceeded, so we don't get stuck in loop?
         logger.info('gpg process exited code {}'.format(p.returncode))
-        if self.state != self.STATE_DONE:
-            raise RuntimeError("Bad passphrase")
+        if self.state == self.STATE_BADPW:
+            raise RuntimeError("Incorrect passphrase")
+        elif self.state == self.STATE_NOPW:
+            raise RuntimeError("Passphase not supplied")
+        elif self.state != self.STATE_DONE:
+            raise RuntimeError("Unhandled GnuPG behaviour")
 
     def _get_response(self, keyid, line):
         msg = line[9:]  # strip "[GNUPG:] "
