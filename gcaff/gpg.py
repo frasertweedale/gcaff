@@ -406,7 +406,7 @@ class GnuPG(object):
         while p.poll() is None:
             line = p.stdout.readline().strip()
             logger.debug(line)
-            response = self._get_response(keyid, line)
+            response = self._get_response(signkey, line)
             if response is not None:
                 logger.debug(response)
                 p.stdin.write(response + '\n')
@@ -420,14 +420,14 @@ class GnuPG(object):
         elif self.state != self.STATE_DONE:
             raise RuntimeError("Unhandled GnuPG behaviour")
 
-    def _get_response(self, keyid, line):
+    def _get_response(self, signkey, line):
         msg = line[9:]  # strip "[GNUPG:] "
         lut = {
             "GOT_IT": None,
             "GET_LINE keyedit.prompt": self._get_line_keyedit_prompt,
             "GET_LINE sign_uid.class": '',  # accept default
             "GET_BOOL sign_uid.okay": 'y',
-            "BAD_PASSPHRASE {}".format(keyid): self._on_bad_passphrase,
+            "BAD_PASSPHRASE {}".format(signkey): self._on_bad_passphrase,
             "MISSING_PASSPHRASE": self._on_missing_passphrase,
             "GOOD_PASSPHRASE": self._on_good_passphrase,
             # "USERID_HINT <full user id>"
