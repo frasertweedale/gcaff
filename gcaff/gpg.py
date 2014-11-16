@@ -453,7 +453,7 @@ class GnuPG(object):
             return 'sign'
         elif self.state in {self.STATE_BADPW, self.STATE_NOPW}:
             return 'quit'
-        elif self.state == self.STATE_GOODPW:
+        elif self.state in {self.STATE_SIGN, self.STATE_GOODPW}:
             self.state = self.STATE_DONE
             return 'save'
         else:
