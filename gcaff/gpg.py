@@ -373,7 +373,8 @@ class GnuPG(object):
         return images
 
     STATE_MINIMIZE, STATE_INIT, STATE_UID, STATE_SIGN, \
-        STATE_GOODPW, STATE_BADPW, STATE_NOPW, STATE_DONE = range(8)
+        STATE_GOODPW, STATE_BADPW, STATE_NOPW, STATE_DONE, \
+        STATE_NOAGENT = range(9)
 
     def sign_key_uid(
         self, signkey, keyid, uid, cert_level=0, digest='SHA256',
@@ -417,6 +418,8 @@ class GnuPG(object):
             raise RuntimeError("Incorrect passphrase")
         elif self.state == self.STATE_NOPW:
             raise RuntimeError("Passphase not supplied")
+        elif self.state == self.STATE_NOAGENT:
+            raise RuntimeError("Failed to locate gpg-agent")
         elif self.state != self.STATE_DONE:
             raise RuntimeError("Unhandled GnuPG behaviour")
 
@@ -430,6 +433,7 @@ class GnuPG(object):
             "BAD_PASSPHRASE {}".format(signkey): self._on_bad_passphrase,
             "MISSING_PASSPHRASE": self._on_missing_passphrase,
             "GOOD_PASSPHRASE": self._on_good_passphrase,
+            "GET_HIDDEN passphrase.enter": self._on_passphrase_enter,
             # "USERID_HINT <full user id>"
             # "NEED_PASSPHRASE <long keyid> <longkeyid> 1 0"
             # "ALREADY_SIGNED <long keyid>" <-- exit code 0
@@ -451,7 +455,11 @@ class GnuPG(object):
         elif self.state == self.STATE_UID:
             self.state = self.STATE_SIGN
             return 'sign'
-        elif self.state in {self.STATE_BADPW, self.STATE_NOPW}:
+        elif self.state in {
+            self.STATE_BADPW,
+            self.STATE_NOPW,
+            self.STATE_NOAGENT,
+        }:
             return 'quit'
         elif self.state in {self.STATE_SIGN, self.STATE_GOODPW}:
             self.state = self.STATE_DONE
@@ -460,14 +468,19 @@ class GnuPG(object):
             raise RuntimeError('gpg state violation')
 
     def _on_bad_passphrase(self):
-        if self.state != self.STATE_NOPW:
+        if self.state not in  {self.STATE_NOPW, self.STATE_NOAGENT}:
             self.state = self.STATE_BADPW
 
     def _on_missing_passphrase(self):
-        self.state = self.STATE_NOPW
+        if self.state != self.STATE_NOAGENT:
+            self.state = self.STATE_NOPW
 
     def _on_good_passphrase(self):
         self.state = self.STATE_GOODPW
+
+    def _on_passphrase_enter(self):
+        self.state = self.STATE_NOAGENT
+        return ''
 
 
 class AgentError(StandardError):
