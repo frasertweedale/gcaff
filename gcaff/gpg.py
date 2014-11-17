@@ -460,7 +460,8 @@ class GnuPG(object):
             raise RuntimeError('gpg state violation')
 
     def _on_bad_passphrase(self):
-        self.state = self.STATE_BADPW
+        if self.state != self.STATE_NOPW:
+            self.state = self.STATE_BADPW
 
     def _on_missing_passphrase(self):
         self.state = self.STATE_NOPW
