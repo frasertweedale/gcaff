@@ -1,5 +1,5 @@
 # This file is part of gcaff
-# Copyright (C) 2013 Fraser Tweedale
+# Copyright (C) 2013-2014  Fraser Tweedale
 #
 # gcaff is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = '0.2'
+VERSION = '0.3'
 USER_AGENT = 'gcaff {} - https://github.com/frasertweedale/gcaff' \
     .format(VERSION)
