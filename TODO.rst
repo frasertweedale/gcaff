@@ -32,3 +32,13 @@ Mailer
 
 - Allow user to choose the ``From`` address for sending keys from
   the uids on the signing key(s).
+
+
+UI / UX
+-------
+
+- General UI / UX improvements
+
+- "About" dialog
+
+- i18n
