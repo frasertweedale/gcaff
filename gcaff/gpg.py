@@ -184,7 +184,6 @@ class Key(object):
             '-bit' if self.algorithm not in ECC_ALGORITHMS else ''
         )
 
-
     def human_fingerprint(self):
         fpr = self.fingerprint
         return ' '.join(fpr[i:i + 4] for i in xrange(0, len(fpr), 4))
@@ -468,7 +467,7 @@ class GnuPG(object):
             raise RuntimeError('gpg state violation')
 
     def _on_bad_passphrase(self):
-        if self.state not in  {self.STATE_NOPW, self.STATE_NOAGENT}:
+        if self.state not in {self.STATE_NOPW, self.STATE_NOAGENT}:
             self.state = self.STATE_BADPW
 
     def _on_missing_passphrase(self):

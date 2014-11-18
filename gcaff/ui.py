@@ -1,5 +1,5 @@
 # This file is part of gcaff
-# Copyright (C) 2013 Fraser Tweedale
+# Copyright (C) 2013-2014 Fraser Tweedale
 #
 # gcaff is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -418,7 +418,8 @@ class ProgressPage(gtk.VBox):
                     gtk.MESSAGE_ERROR,
                     gtk.BUTTONS_CLOSE
                 )
-                dialog.set_property('text',
+                dialog.set_property(
+                    'text',
                     "{}. The program will now exit.".format(msg[1]))
                 dialog.set_property('secondary-text', repr(msg[2]))
                 dialog.connect('response', gtk.main_quit)
