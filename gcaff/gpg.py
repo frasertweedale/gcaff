@@ -429,6 +429,7 @@ class GnuPG(object):
             "GET_LINE keyedit.prompt": self._get_line_keyedit_prompt,
             "GET_LINE sign_uid.class": '',  # accept default
             "GET_BOOL sign_uid.okay": 'y',
+            "GET_BOOL keyedit.save.okay": 'n',
             "BAD_PASSPHRASE {}".format(signkey): self._on_bad_passphrase,
             "MISSING_PASSPHRASE": self._on_missing_passphrase,
             "GOOD_PASSPHRASE": self._on_good_passphrase,
