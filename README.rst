@@ -74,7 +74,7 @@ system.  Note that on many systems PyGTK cannot be installed with
 To install dependencies on a Debian or Ubuntu system (or other
 systems using APT)::
 
-  sudo apt-get install gnupg gnupg-agent postfix
+  sudo apt-get install gnupg gnupg-agent python-pip postfix
 
 If ``gnupg-agent`` was not previously installed you will probably
 need to log out and log in again to ensure that ``gpg-agent`` is
