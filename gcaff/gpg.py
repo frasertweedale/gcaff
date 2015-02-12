@@ -488,6 +488,14 @@ class AgentError(StandardError):
 
 
 def test_agent():
+    try:
+        _test_connect_agent()
+    except AgentError:
+        _start_agent()
+        _test_connect_agent()
+
+
+def _test_connect_agent():
     """Try to talk to the agent and raise an error if we can't."""
     try:
         p = subprocess.Popen(
@@ -501,3 +509,18 @@ def test_agent():
             raise AgentError(stderr)
     except OSError as e:
         raise AgentError(str(e))
+
+
+def _start_agent():
+    """Start a ``gpg-agent`` process.
+
+    Does not check to see if an agent is already running, and does
+    not raise if there is an error (caller should call
+    ``_test_connect_agent`` to determine if a working agent is
+    running.
+
+    """
+    try:
+        subprocess.check_call(['gpg-agent', '--daemon', '--use-standard-socket'])
+    except:
+        pass
