@@ -108,7 +108,6 @@ class SigningAssistant(gtk.Assistant):
 
     @staticmethod
     def on_prepare(assistant, page, *args):
-        on_complete = lambda: assistant.set_page_complete(page, True)
         if isinstance(page, ProgressPage):
             page.sign_and_send(
                 assistant.signing_keys,
