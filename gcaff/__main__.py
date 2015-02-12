@@ -93,6 +93,18 @@ def main():
             gtk.FILE_CHOOSER_ACTION_OPEN,
             (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK)
         )
+
+        pgpfilter = gtk.FileFilter()
+        pgpfilter.set_name('PGP public key block')
+        pgpfilter.add_mime_type('application/x-gnupg-keyring')
+        pgpfilter.add_mime_type('application/pgp-keys')
+        dialog.add_filter(pgpfilter)
+
+        allfilter = gtk.FileFilter()
+        allfilter.set_name('All files')
+        allfilter.add_pattern('*')
+        dialog.add_filter(allfilter)
+
         dialog.set_default_response(gtk.RESPONSE_OK)
         response = dialog.run()
         try:
