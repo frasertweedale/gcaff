@@ -1,5 +1,5 @@
 # This file is part of gcaff
-# Copyright (C) 2013 Fraser Tweedale
+# Copyright (C) 2013, 2015  Fraser Tweedale
 #
 # gcaff is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import gtk
 from . import gpg
 from . import mail
 from . import ui
+from . import version
 
 
 def run_assistant(args):
@@ -63,7 +64,11 @@ def run_error(text, secondary_text):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Graphical OpenPGP key signing assistant")
+    parser.add_argument(
+        '--version', action='version',
+        version='%(prog)s ' + version.VERSION)
     parser.add_argument(
         '--keyring', type=argparse.FileType(), required=True,
         help='keyring containing keys to be signed')
