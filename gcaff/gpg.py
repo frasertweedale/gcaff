@@ -241,6 +241,20 @@ class GnuPG(object):
         path = os.path.join(self.homedir, 'S.gpg-agent')
         return path if os.path.exists(path) else None
 
+    def unlock_key(self, signkey):
+        """Force user to unlock their key by signing some empty data."""
+        args = [
+            '--local-user',
+            signkey,
+            '--armor',
+            '--output=/dev/null',
+            '--sign',
+            '/dev/null'
+        ]
+        p = self._popen(args)
+        p.communicate()
+        return p.returncode == 0
+
     def import_keys(self, data, minimal=False):
         """Import keys from the given data.
 

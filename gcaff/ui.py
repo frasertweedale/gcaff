@@ -49,7 +49,7 @@ class SigningAssistant(gtk.Assistant):
         signing_keys = self.signing_keys_by_keyid.values()
 
         self.signing_keys = []
-        self.signing_key_page = SigningKeyPage(signing_keys)
+        self.signing_key_page = SigningKeyPage(signing_keys, usergpg)
         self.append_page(self.signing_key_page)
         self.set_page_type(self.signing_key_page, gtk.ASSISTANT_PAGE_CONTENT)
         self.set_page_title(self.signing_key_page, 'Select signing key(s).')
@@ -124,8 +124,14 @@ class SigningKeyPage(gtk.VBox):
         ),
     }
 
-    def __init__(self, keys):
+    model_checked_index = 0
+    model_human_algo_index = 1
+    model_keyid_index = 2
+
+    def __init__(self, keys, usergpg):
         super(SigningKeyPage, self).__init__()
+
+        self.usergpg = usergpg
 
         self.model = gtk.ListStore(bool, str, str)
         for key in keys:
@@ -154,7 +160,13 @@ class SigningKeyPage(gtk.VBox):
         treeview.append_column(keyid_col)
 
     def on_toggle(self, cell, path, model):
-        model[path][0] = not model[path][0]
+        if not model[path][self.model_checked_index]:
+            # selecting
+            if self.usergpg.unlock_key(model[path][self.model_keyid_index]):
+                model[path][self.model_checked_index] = True
+        else:
+            # deselecting
+            model[path][self.model_checked_index] = False
         signing_keys = [keyid for checked, _, keyid in model if checked]
         self.emit('signing-keys-changed', signing_keys)
 
