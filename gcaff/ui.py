@@ -1,5 +1,5 @@
 # This file is part of gcaff
-# Copyright (C) 2013-2014 Fraser Tweedale
+# Copyright (C) 2013, 2014, 2015  Fraser Tweedale
 #
 # gcaff is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,8 +23,9 @@ import os
 import smtplib
 import tempfile
 
-import gobject
-import gtk
+import gi.repository.GObject as gobject
+import gi.repository.GdkPixbuf as gdkpixbuf
+import gi.repository.Gtk as gtk
 
 from . import gpg
 from . import mail
@@ -51,7 +52,7 @@ class SigningAssistant(gtk.Assistant):
         self.signing_keys = []
         self.signing_key_page = SigningKeyPage(signing_keys, usergpg)
         self.append_page(self.signing_key_page)
-        self.set_page_type(self.signing_key_page, gtk.ASSISTANT_PAGE_CONTENT)
+        self.set_page_type(self.signing_key_page, gtk.AssistantPageType.CONTENT)
         self.set_page_title(self.signing_key_page, 'Select signing key(s).')
         self.signing_key_page.connect(
             'signing-keys-changed',
@@ -67,26 +68,26 @@ class SigningAssistant(gtk.Assistant):
         for key in keys:
             uid_selector = UidSelector(key)
             self.append_page(uid_selector)
-            self.set_page_type(uid_selector, gtk.ASSISTANT_PAGE_CONTENT)
+            self.set_page_type(uid_selector, gtk.AssistantPageType.CONTENT)
             self.set_page_title(uid_selector, key.human_fingerprint())
             self.uid_selectors.append((key, uid_selector))
 
         confirm_page = ConfirmPage()
         self.append_page(confirm_page)
-        self.set_page_type(confirm_page, gtk.ASSISTANT_PAGE_CONFIRM)
+        self.set_page_type(confirm_page, gtk.AssistantPageType.CONFIRM)
 
         # path to signature file
         self.sigfile = None
 
         self.progress_page = ProgressPage(usergpg, tmpgpg)
         self.append_page(self.progress_page)
-        self.set_page_type(self.progress_page, gtk.ASSISTANT_PAGE_PROGRESS)
+        self.set_page_type(self.progress_page, gtk.AssistantPageType.PROGRESS)
         self.progress_page.connect('sign-complete', self.on_sign_complete)
         self.progress_page.connect('send-complete', self.on_send_complete)
 
         summary_page = SummaryPage(self.progress_page)
         self.append_page(summary_page)
-        self.set_page_type(summary_page, gtk.ASSISTANT_PAGE_SUMMARY)
+        self.set_page_type(summary_page, gtk.AssistantPageType.SUMMARY)
 
     def _selected_uids(self):
         selected_uids = (
@@ -138,7 +139,7 @@ class SigningKeyPage(gtk.VBox):
             self.model.append((False, key.human_algorithm(), key.keyid))
 
         treeview = gtk.TreeView(self.model)
-        self.pack_start(treeview)
+        self.pack_start(treeview, True, True, 0)
 
         toggle_renderer = gtk.CellRendererToggle()
         toggle_renderer.connect('toggled', self.on_toggle, self.model)
@@ -178,27 +179,35 @@ class UidSelector(gtk.VBox):
         self.set_border_width(10)
 
         self.cert_level = 0
-        frame = gtk.Frame('Certification level')
+        frame = gtk.Frame()
+        frame.set_label('Certification level')
         hbox = gtk.HBox()
         button_box = gtk.VButtonBox()
         button_box.set_border_width(5)
         button_box.set_spacing(-10)
-        radio0 = gtk.RadioButton(None, '(0) I will not answer.')
+
+        radio0 = gtk.RadioButton(None)
+        radio0.set_label('(0) I will not answer.')
         radio0.connect('clicked', self.on_radio_clicked, 0)
-        radio1 = gtk.RadioButton(radio0, '(1) I have not checked at all.')
+
+        radio1 = gtk.RadioButton.new_from_widget(radio0)
+        radio1.set_label('(1) I have not checked at all.')
         radio1.connect('clicked', self.on_radio_clicked, 1)
-        radio2 = gtk.RadioButton(radio0, '(2) I have done casual checking.')
+
+        radio2 = gtk.RadioButton.new_from_widget(radio0)
+        radio2.set_label('(2) I have done casual checking.')
         radio2.connect('clicked', self.on_radio_clicked, 2)
-        radio3 = gtk.RadioButton(
-            radio0,
-            '(3) I have done very careful checking.'
-        )
+
+        radio3 = gtk.RadioButton.new_from_widget(radio0)
+        radio3.set_label('(3) I have done very careful checking.')
         radio3.connect('clicked', self.on_radio_clicked, 3)
+
         for radio in (radio0, radio1, radio2, radio3):
             button_box.add(radio)
-        hbox.pack_start(button_box, expand=False)
+
+        hbox.pack_start(button_box, False, True, 0)
         frame.add(hbox)
-        self.pack_start(frame, expand=False)
+        self.pack_start(frame, False, True, 0)
 
         self.OFFSET = dict(zip(
             (
@@ -211,7 +220,7 @@ class UidSelector(gtk.VBox):
             ),
             range(6)
         ))
-        self.model = gtk.ListStore(int, bool, bool, bool, str, gtk.gdk.Pixbuf)
+        self.model = gtk.ListStore(int, bool, bool, bool, str, gdkpixbuf.Pixbuf)
 
         self.uids = key.uids
         for i, uid in enumerate(key.uids):
@@ -223,7 +232,7 @@ class UidSelector(gtk.VBox):
                 with tempfile.NamedTemporaryFile() as f:
                     f.write(uid.data)
                     f.flush()
-                    pixbuf = gtk.gdk.pixbuf_new_from_file(f.name)
+                    pixbuf = gdkpixbuf.Pixbuf.new_from_file(f.name)
             elif isinstance(uid, gpg.UnknownUid):
                 label = str(uid)
                 pixbuf = None
@@ -265,13 +274,14 @@ class UidSelector(gtk.VBox):
         treeview.append_column(uid_col)
         # TODO column showing validity
 
-        self.pack_start(treeview, expand=False)
+        self.pack_start(treeview, False, True, 0)
 
     def on_toggle(self, cell, path, model):
         model[path][self.OFFSET['SELECTED']] \
             = not model[path][self.OFFSET['SELECTED']]
 
     def on_radio_clicked(self, button, cert_level):
+        print 'set cert level {}'.format(cert_level)
         self.cert_level = cert_level
 
     def selected_uids(self):
@@ -290,7 +300,7 @@ class ConfirmPage(gtk.HBox):
     def __init__(self):
         super(ConfirmPage, self).__init__()
         text = '''Sign and email all selected UIDs?'''
-        self.pack_start(gtk.Label(text))
+        self.pack_start(gtk.Label(text), True, True, 0)
 
 
 def sign_and_send(tmpgpg, uids, conn):
@@ -373,11 +383,11 @@ class ProgressPage(gtk.VBox):
         self.usergpg = usergpg
         self.tmpgpg = tmpgpg
         self.progress_bar = gtk.ProgressBar()
-        self.pack_start(self.progress_bar)
+        self.pack_start(self.progress_bar, True, True, 0)
 
         self.notice = gtk.Label()
         self.notice.set_selectable(True)
-        self.pack_start(self.notice)
+        self.pack_start(self.notice, True, True, 0)
 
         self.connect('sign-complete', self.on_sign_complete)
 
@@ -430,9 +440,9 @@ class ProgressPage(gtk.VBox):
             elif msg[0] == MSG_ERR_FATAL:
                 dialog = gtk.MessageDialog(
                     None,
-                    gtk.DIALOG_MODAL,
-                    gtk.MESSAGE_ERROR,
-                    gtk.BUTTONS_CLOSE
+                    gtk.DialogFlags.MODAL,
+                    gtk.MessageType.ERROR,
+                    gtk.ButtonsType.CLOSE
                 )
                 dialog.set_property(
                     'text',
@@ -460,12 +470,12 @@ class SummaryPage(gtk.VBox):
     def __init__(self, progress_page):
         super(SummaryPage, self).__init__()
         text = 'Signing and emailing completed.'
-        self.pack_start(gtk.Label(text))
+        self.pack_start(gtk.Label(text), True, True, 0)
 
         self.import_help_label = gtk.Label()
         self.import_help_label.set_line_wrap(True)
         self.import_help_label.set_selectable(True)
-        self.pack_start(self.import_help_label)
+        self.pack_start(self.import_help_label, True, True, 0)
 
         progress_page.connect('sign-complete', self.on_sign_complete)
 

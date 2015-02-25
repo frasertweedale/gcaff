@@ -22,7 +22,7 @@ import socket
 import tempfile
 import sys
 
-import gtk
+import gi.repository.Gtk as gtk
 
 from . import gpg
 from . import mail
@@ -54,8 +54,8 @@ def run_assistant(args):
 
 def run_error(text, secondary_text):
     window = gtk.MessageDialog(
-        type=gtk.MESSAGE_ERROR,
-        buttons=gtk.BUTTONS_CLOSE
+        type=gtk.MessageType.ERROR,
+        buttons=gtk.ButtonsType.CLOSE
     )
     window.connect('response', gtk.main_quit)
     window.set_property('text', text)
@@ -90,8 +90,8 @@ def main():
         dialog = gtk.FileChooserDialog(
             "Open party keyring",
             None,
-            gtk.FILE_CHOOSER_ACTION_OPEN,
-            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK)
+            gtk.FileChooserAction.OPEN,
+            (gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL, gtk.STOCK_OPEN, gtk.ResponseType.OK)
         )
 
         pgpfilter = gtk.FileFilter()
@@ -105,12 +105,12 @@ def main():
         allfilter.add_pattern('*')
         dialog.add_filter(allfilter)
 
-        dialog.set_default_response(gtk.RESPONSE_OK)
+        dialog.set_default_response(gtk.ResponseType.OK)
         response = dialog.run()
         try:
-            if response == gtk.RESPONSE_OK:
+            if response == gtk.ResponseType.OK:
                 args.keyring = open(dialog.get_filename())
-            elif response == gtk.RESPONSE_CANCEL:
+            elif response == gtk.ResponseType.CANCEL:
                 sys.exit()
             else:
                 raise RuntimeError
