@@ -1,5 +1,7 @@
+# coding=utf8
+
 # This file is part of gcaff
-# Copyright (C) 2013-2014  Fraser Tweedale
+# Copyright (C) 2013, 2014, 2015  Fraser Tweedale
 #
 # gcaff is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,3 +19,5 @@
 VERSION = '0.3'
 USER_AGENT = 'gcaff {} - https://github.com/frasertweedale/gcaff' \
     .format(VERSION)
+COPYRIGHT = '© 2013–2015 gcaff contributors'
+AUTHORS = ['Fraser Tweedale', 'Michael Wheeler']

@@ -49,11 +49,16 @@ class SigningAssistant(gtk.Assistant):
         }
         signing_keys = self.signing_keys_by_keyid.values()
 
+        intro_page = IntroPage()
+        self.append_page(intro_page)
+        self.set_page_type(intro_page, gtk.AssistantPageType.INTRO)
+        self.set_page_title(intro_page, 'Introduction')
+
         self.signing_keys = []
         self.signing_key_page = SigningKeyPage(signing_keys, usergpg)
         self.append_page(self.signing_key_page)
         self.set_page_type(self.signing_key_page, gtk.AssistantPageType.CONTENT)
-        self.set_page_title(self.signing_key_page, 'Select signing key(s).')
+        self.set_page_title(self.signing_key_page, 'Select signing key(s)')
         self.signing_key_page.connect(
             'signing-keys-changed',
             self.on_signing_keys_changed
@@ -117,6 +122,23 @@ class SigningAssistant(gtk.Assistant):
         elif not isinstance(page, SigningKeyPage):
             assistant.set_page_complete(page, True)
 
+
+class IntroPage(gtk.VBox):
+    def __init__(self):
+        super(IntroPage, self).__init__()
+        about_button = gtk.Button("About")
+        about_button.connect('clicked', self.on_about_button_clicked)
+        self.pack_start(about_button, True, False, 0)
+
+    def on_about_button_clicked(self, _):
+        about_dialog = gtk.AboutDialog(self)
+        about_dialog.set_version(version.VERSION)
+        about_dialog.set_comments('OpenPGP key signing assistant')
+        about_dialog.set_copyright(version.COPYRIGHT)
+        about_dialog.set_license_type(gtk.License.GPL_3_0)
+        about_dialog.set_authors(version.AUTHORS)
+        about_dialog.connect('response', lambda _1, _2: about_dialog.close())
+        about_dialog.run()
 
 class SigningKeyPage(gtk.VBox):
     __gsignals__ = {
