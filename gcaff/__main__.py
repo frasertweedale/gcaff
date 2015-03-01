@@ -30,7 +30,7 @@ from . import ui
 from . import version
 
 
-def run_assistant(args):
+def run_assistant():
     homegpg = gpg.GnuPG()
 
     tmpgpgdir = tempfile.mkdtemp()
@@ -40,9 +40,6 @@ def run_assistant(args):
     agent_socket = homegpg.agent_socket()
     if agent_socket:
         os.symlink(agent_socket, os.path.join(tmpgpgdir, 'S.gpg-agent'))
-
-    # import signing candidates
-    tmpgpg.import_keys(args.keyring.read(), minimal=True)
 
     window = ui.SigningAssistant(homegpg, tmpgpg)
     window.show_all()
@@ -71,9 +68,6 @@ def main():
     parser.add_argument(
         '--version', action='version',
         version='%(prog)s ' + version.VERSION)
-    parser.add_argument(
-        '--keyring', type=argparse.FileType(), required=False,
-        help='keyring containing keys to be signed')
     parser.add_argument('--logging', default='WARNING', help='set log level')
 
     args = parser.parse_args()
@@ -86,44 +80,10 @@ def main():
     except socket.error as e:
         run_error('Could not connect to local mailer', str(e))
 
-    if not args.keyring:
-        dialog = gtk.FileChooserDialog(
-            "Open party keyring",
-            None,
-            gtk.FileChooserAction.OPEN,
-            (gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL, gtk.STOCK_OPEN, gtk.ResponseType.OK)
-        )
-
-        pgpfilter = gtk.FileFilter()
-        pgpfilter.set_name('PGP public key block')
-        pgpfilter.add_mime_type('application/x-gnupg-keyring')
-        pgpfilter.add_mime_type('application/pgp-keys')
-        dialog.add_filter(pgpfilter)
-
-        allfilter = gtk.FileFilter()
-        allfilter.set_name('All files')
-        allfilter.add_pattern('*')
-        dialog.add_filter(allfilter)
-
-        dialog.set_default_response(gtk.ResponseType.OK)
-        response = dialog.run()
-        try:
-            if response == gtk.ResponseType.OK:
-                args.keyring = open(dialog.get_filename())
-            elif response == gtk.ResponseType.CANCEL:
-                sys.exit()
-            else:
-                raise RuntimeError
-        except Exception as e:
-            run_error(
-                'Could not open file',
-                "For some reason I couldn't open this file"
-            )
-        dialog.destroy()
     level = getattr(logging, args.logging.upper(), 'WARNING')
     logging.basicConfig(level=level)
 
-    run_assistant(args)
+    run_assistant()
 
 
 if __name__ == '__main__':

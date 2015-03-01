@@ -39,6 +39,4 @@ UI / UX
 
 - General UI / UX improvements
 
-- "About" dialog
-
 - i18n

@@ -37,23 +37,30 @@ logger = logging.getLogger(__name__)
 class SigningAssistant(gtk.Assistant):
     def __init__(self, usergpg, tmpgpg):
         super(SigningAssistant, self).__init__()
+        self.usergpg = usergpg
+        self.tmpgpg = tmpgpg
+        self.have_uid_pages = False
+
         self.set_title(version.USER_AGENT)
         self.connect('delete-event', gtk.main_quit)
         self.connect('cancel', gtk.main_quit)
         self.connect('close', gtk.main_quit)
         self.connect('prepare', self.on_prepare)
 
+        intro_page = IntroPage()
+        self.append_page(intro_page)
+        self.set_page_type(intro_page, gtk.AssistantPageType.CONTENT)
+        self.set_page_title(intro_page, 'Introduction')
+        intro_page.connect(
+            'target-keyring-changed',
+            self.on_target_keyring_changed
+        )
+
         self.signing_keys_by_keyid = {
             key.keyid: key
             for key in usergpg.list_secret_keys()
         }
         signing_keys = self.signing_keys_by_keyid.values()
-
-        intro_page = IntroPage()
-        self.append_page(intro_page)
-        self.set_page_type(intro_page, gtk.AssistantPageType.INTRO)
-        self.set_page_title(intro_page, 'Introduction')
-
         self.signing_keys = []
         self.signing_key_page = SigningKeyPage(signing_keys, usergpg)
         self.append_page(self.signing_key_page)
@@ -64,35 +71,47 @@ class SigningAssistant(gtk.Assistant):
             self.on_signing_keys_changed
         )
 
+    def append_uid_pages(self):
+        with open(self.target_keyring) as f:
+            self.tmpgpg.import_keys(f.read(), minimal=True)
+
         keys = (
-            key for key in tmpgpg.list_keys()
-            if key not in signing_keys
+            key for key in self.tmpgpg.list_keys()
+            if key not in self.signing_keys_by_keyid.viewvalues()
         )
 
         self.uid_selectors = []
-        for key in keys:
+        for i, key in enumerate(keys):
             uid_selector = UidSelector(key)
+            uid_selector.show_all()
             self.append_page(uid_selector)
             self.set_page_type(uid_selector, gtk.AssistantPageType.CONTENT)
             self.set_page_title(uid_selector, key.human_fingerprint())
             self.uid_selectors.append((key, uid_selector))
 
         confirm_page = ConfirmPage()
+        confirm_page.show_all()
         self.append_page(confirm_page)
         self.set_page_type(confirm_page, gtk.AssistantPageType.CONFIRM)
+        self.set_page_title(confirm_page, 'Sign and send')
 
         # path to signature file
         self.sigfile = None
 
-        self.progress_page = ProgressPage(usergpg, tmpgpg)
+        self.progress_page = ProgressPage(self.usergpg, self.tmpgpg)
+        self.progress_page.show_all()
         self.append_page(self.progress_page)
         self.set_page_type(self.progress_page, gtk.AssistantPageType.PROGRESS)
         self.progress_page.connect('sign-complete', self.on_sign_complete)
         self.progress_page.connect('send-complete', self.on_send_complete)
 
         summary_page = SummaryPage(self.progress_page)
+        summary_page.show_all()
         self.append_page(summary_page)
         self.set_page_type(summary_page, gtk.AssistantPageType.SUMMARY)
+        self.set_page_title(summary_page, 'Summary')
+
+        self.have_uid_pages = True
 
     def _selected_uids(self):
         selected_uids = (
@@ -100,6 +119,10 @@ class SigningAssistant(gtk.Assistant):
             for key, uid_selector in self.uid_selectors
         )
         return [(key, sel) for key, sel in selected_uids if sel]
+
+    def on_target_keyring_changed(self, page, filename):
+        self.set_page_complete(page, True)
+        self.target_keyring = filename
 
     def on_signing_keys_changed(self, page, keyids):
         self.signing_keys = \
@@ -114,21 +137,53 @@ class SigningAssistant(gtk.Assistant):
 
     @staticmethod
     def on_prepare(assistant, page, *args):
-        if isinstance(page, ProgressPage):
+        if isinstance(page, SigningKeyPage) and not assistant.have_uid_pages:
+            assistant.append_uid_pages()
+        elif isinstance(page, UidSelector):
+            assistant.set_page_complete(page, True)
+        elif isinstance(page, ConfirmPage):
+            assistant.set_page_complete(page, True)
+        elif isinstance(page, ProgressPage):
+            assistant.commit()
             page.sign_and_send(
                 assistant.signing_keys,
                 assistant._selected_uids()
             )
-        elif not isinstance(page, SigningKeyPage):
-            assistant.set_page_complete(page, True)
 
 
 class IntroPage(gtk.VBox):
+    __gsignals__ = {
+        'target-keyring-changed': (
+            gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (str,)
+        ),
+    }
+
     def __init__(self):
         super(IntroPage, self).__init__()
-        about_button = gtk.Button("About")
+
+        keyring_button = gtk.FileChooserButton()
+        keyring_button.set_title("Open target keyring")
+        keyring_button.connect('file-set', self.on_file_set)
+
+        pgpfilter = gtk.FileFilter()
+        pgpfilter.set_name('PGP public key block')
+        pgpfilter.add_mime_type('application/pgp-keys')
+        pgpfilter.add_mime_type('application/x-gnupg-keyring')
+        keyring_button.add_filter(pgpfilter)
+
+        allfilter = gtk.FileFilter()
+        allfilter.set_name('All files')
+        allfilter.add_pattern('*')
+        keyring_button.add_filter(allfilter)
+
+        self.pack_start(keyring_button, True, False, 0)
+
+        about_button = gtk.Button("About gcaff")
         about_button.connect('clicked', self.on_about_button_clicked)
         self.pack_start(about_button, True, False, 0)
+
+    def on_file_set(self, chooser):
+        self.emit('target-keyring-changed', chooser.get_filename())
 
     def on_about_button_clicked(self, _):
         about_dialog = gtk.AboutDialog(self)
@@ -139,6 +194,7 @@ class IntroPage(gtk.VBox):
         about_dialog.set_authors(version.AUTHORS)
         about_dialog.connect('response', lambda _1, _2: about_dialog.close())
         about_dialog.run()
+
 
 class SigningKeyPage(gtk.VBox):
     __gsignals__ = {
