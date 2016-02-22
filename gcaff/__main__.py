@@ -22,6 +22,8 @@ import socket
 import tempfile
 import sys
 
+import gi
+gi.require_version('Gtk', '3.0')
 import gi.repository.Gtk as gtk
 
 from . import gpg
