@@ -218,12 +218,17 @@ class UidSelector(gtk.VBox):
             if isinstance(uid, gpg.TextUid):
                 label = uid.data
                 pixbuf = None
-            else:
+            elif isinstance(uid, gpg.ImageUid):
                 label = None
                 with tempfile.NamedTemporaryFile() as f:
                     f.write(uid.data)
                     f.flush()
                     pixbuf = gtk.gdk.pixbuf_new_from_file(f.name)
+            elif isinstance(uid, gpg.UnknownUid):
+                label = str(uid)
+                pixbuf = None
+            else:
+                raise RuntimeError("Unrecognised Uid type")
             self.model.append((
                 i,
                 False,

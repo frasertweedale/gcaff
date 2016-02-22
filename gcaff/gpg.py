@@ -79,12 +79,12 @@ ECC_ALGORITHMS = {'18', '19', '22'}
 
 
 class Uid(object):
-    def __init__(self, validity, data):
-        self._validity = validity
+    def __init__(self, validity_char, data):
+        self.validity_char = validity_char
         self.data = data
 
     def validity(self):
-        return VALIDITY.get(self._validity, VALIDITY_UNKNOWN)
+        return VALIDITY.get(self.validity_char, VALIDITY_UNKNOWN)
 
     def signable(self):
         return SIGNABLE[self.validity()]
@@ -115,6 +115,20 @@ class ImageUid(Uid):
 
     def __str__(self):
         return '[jpeg image of size {}]'.format(len(self.data))
+
+
+class UnknownUid(Uid):
+    def name(self):
+        return '[unknown attribute]'
+
+    def signable(self):
+        return False
+
+    def email(self):
+        return None
+
+    def __str__(self):
+        return '[unknown attribute of size {}]'.format(len(self.data))
 
 
 class Key(object):
@@ -357,7 +371,9 @@ class GnuPG(object):
                 # never seen such a case.
                 #
                 _, validity = line.split(':')[:2]
-                kwargs['uids'].append(ImageUid(validity, data=images.pop(0)))
+                uid = images.pop(0)
+                uid.validity_char = validity
+                kwargs['uids'].append(uid)
         if seen:
             keys.append(Key(**kwargs))
         return keys
@@ -370,19 +386,27 @@ class GnuPG(object):
                     \[GNUPG:\]\ ATTRIBUTE
                     \ \w+                   # fingerprint
                     \ (?P<octets>\d+)
-                    \ 1                     # type (1 == image)
+                    \ (?P<attrtype>\d+)
                     \ (?P<index>\d+)
                     \ (?P<count>\d+)
                     \                       # ... don't care about the rest
                 ''', line, re.VERBOSE)
             if match:
                 data = attr_fh.read(int(match.group('octets')))
-                if not data[:4] == '\x10\x00\x01\x01':
-                    raise RuntimeError('invalid data in attribute packet')
+
+                offset = 0
+                con = UnknownUid
+
+                if match.group('attrtype') == '1':  # image
+                    offset = 16
+                    if data[:4] == '\x10\x00\x01\x01':  # JPEG
+                        con = ImageUid
+
                 if match.group('index') == '1':
-                    images.append(data[16:])
+                    images.append(con(None, data[offset:]))
                 else:
-                    images[-1] += data[16:]
+                    images[-1].data += data[offset:]
+
         return images
 
     STATE_MINIMIZE, STATE_INIT, STATE_UID, STATE_SIGN, \
