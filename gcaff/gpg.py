@@ -1,5 +1,5 @@
 # This file is part of gcaff
-# Copyright (C) 2013-2014  Fraser Tweedale
+# Copyright (C) 2013, 2014, 2016  Fraser Tweedale
 #
 # gcaff is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -310,25 +310,25 @@ class GnuPG(object):
         return self._list_keys(keyids)
 
     def _list_keys(self, keyids=None, secret=False):
-        """Retrieve the given key."""
+        """Retrieve the given key(s)."""
+
+        # create temporary files for status and attribute info
+        stat_fh = tempfile.NamedTemporaryFile()
+        attr_fh = tempfile.NamedTemporaryFile()
+
         # FIXME secret keys are not displaying validity
-        rstat_fd, wstat_fd = os.pipe()
-        rattr_fd, wattr_fd = os.pipe()
         p = self._popen([
-            '--status-fd', str(wstat_fd),
-            '--attribute-fd', str(wattr_fd),
+            '--status-file', stat_fh.name,
+            '--attribute-file', attr_fh.name,
             '--fingerprint',
             '--with-colons',
             '--list-secret-keys' if secret else '--list-keys',
             '--list-options', 'show-uid-validity,show-unusable-uids',
         ] + (keyids or []))
+
         stdout, stderr = p.communicate()
-        os.close(wstat_fd)
-        os.close(wattr_fd)
-        with os.fdopen(rstat_fd) as f:
-            statout = f.read()
-        images = self._get_images_from_key(statout, rattr_fd)
-        os.close(rattr_fd)
+
+        images = self._get_images_from_key(stat_fh, attr_fh)
 
         keys = []
         seen = 0
@@ -363,9 +363,9 @@ class GnuPG(object):
         return keys
 
     @staticmethod
-    def _get_images_from_key(statout, fd):
+    def _get_images_from_key(stat_fh, attr_fh):
         images = []
-        for line in statout.splitlines():
+        for line in stat_fh.read().splitlines():
             match = re.match(r'''
                     \[GNUPG:\]\ ATTRIBUTE
                     \ \w+                   # fingerprint
@@ -376,7 +376,7 @@ class GnuPG(object):
                     \                       # ... don't care about the rest
                 ''', line, re.VERBOSE)
             if match:
-                data = os.read(fd, int(match.group('octets')))
+                data = attr_fh.read(int(match.group('octets')))
                 if not data[:4] == '\x10\x00\x01\x01':
                     raise RuntimeError('invalid data in attribute packet')
                 if match.group('index') == '1':
