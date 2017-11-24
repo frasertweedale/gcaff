@@ -222,16 +222,33 @@ class GnuPG(object):
         raise e
 
     exe, version = _probe()
+    default_gnupghome = (
+        os.environ.get('GNUPGHOME')
+        or os.path.join(os.environ['HOME'], '.gnupg')
+    )
 
     def __init__(self, homedir=None):
-        # determine the user's normal GNUPGHOME, where we expect
-        # to find signing keys
-        self.homedir = homedir \
-            or os.environ.get('GNUPGHOME') \
-            or os.path.join(os.environ['HOME'], '.gnupg')
-        secdir = os.environ.get('GNUPGHOME') \
-            or os.path.join(os.environ['HOME'], '.gnupg')
-        self.secret_keyring = os.path.join(secdir, 'secring.gpg')
+        gnupghome = homedir or self.default_gnupghome
+
+        if os.path.isdir(
+                os.path.join(self.default_gnupghome, 'private-keys-v1.d')):
+            # --secret-keyring option is obsolete and ignored.
+            # We have to use default GNUPGHOME but suppress use of
+            # default keyring and use the keyring in self.homedir
+            self.homedir = self.default_gnupghome
+            self.keyring_args = [
+                '--no-default-keyring',
+                '--keyring',
+                    os.path.join(gnupghome, 'pubring.gpg')
+                    if os.path.exists(os.path.join(gnupghome, 'pubring.gpg'))
+                    else os.path.join(gnupghome, 'pubring.kbx'),
+            ]
+        else:
+            self.homedir = gnupghome
+            self.keyring_args = [
+                '--secret-keyring',
+                    os.path.join(self.default_gnupghome, 'secring.gpg'),
+            ]
 
     def _popen(self, args):
         args = [
@@ -239,8 +256,7 @@ class GnuPG(object):
             '--no-tty',
             '--use-agent',
             '--no-auto-check-trustdb',
-            '--secret-keyring', self.secret_keyring,
-        ] + args
+        ] + self.keyring_args + args
         logger.info('execute gpg: GNUPGHOME={} {}'.format(self.homedir, args))
         return subprocess.Popen(
             args,
