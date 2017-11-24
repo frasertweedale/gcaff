@@ -238,11 +238,18 @@ class GnuPG(object):
             self.homedir = self.default_gnupghome
             self.keyring_args = [
                 '--no-default-keyring',
-                '--keyring',
-                    os.path.join(gnupghome, 'pubring.gpg')
-                    if os.path.exists(os.path.join(gnupghome, 'pubring.gpg'))
-                    else os.path.join(gnupghome, 'pubring.kbx'),
             ]
+
+            gpg_db = os.path.join(gnupghome, 'pubring.gpg')
+            have_gpg_db = os.path.isfile(gpg_db)
+            kbx_db = os.path.join(gnupghome, 'pubring.kbx')
+            have_kbx_db = os.path.isfile(kbx_db) or not have_gpg_db
+
+            if have_gpg_db:
+                self.keyring_args.extend(['--keyring', gpg_db])
+            if have_kbx_db:
+                self.keyring_args.extend(['--keyring', kbx_db])
+
         else:
             self.homedir = gnupghome
             self.keyring_args = [
