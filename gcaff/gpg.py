@@ -411,7 +411,7 @@ class GnuPG(object):
 
     STATE_MINIMIZE, STATE_INIT, STATE_UID, STATE_SIGN, \
         STATE_GOODPW, STATE_BADPW, STATE_NOPW, STATE_DONE, \
-        STATE_NOAGENT = range(9)
+        STATE_NOAGENT, STATE_INV_SGNR = range(10)
 
     def sign_key_uid(
         self, signkey, keyid, uid, cert_level=0, digest='SHA256',
@@ -457,6 +457,8 @@ class GnuPG(object):
             raise RuntimeError("Passphase not supplied")
         elif self.state == self.STATE_NOAGENT:
             raise RuntimeError("Failed to locate gpg-agent")
+        elif self.state == self.STATE_INV_SGNR:
+            raise RuntimeError("Invalid signing key")
         elif self.state != self.STATE_DONE:
             raise RuntimeError("Unhandled GnuPG behaviour")
 
@@ -472,6 +474,7 @@ class GnuPG(object):
             "MISSING_PASSPHRASE": self._on_missing_passphrase,
             "GOOD_PASSPHRASE": self._on_good_passphrase,
             "GET_HIDDEN passphrase.enter": self._on_passphrase_enter,
+            "INV_SGNR 9 {}".format(signkey): self._on_INV_SGNR,
             # "USERID_HINT <full user id>"
             # "NEED_PASSPHRASE <long keyid> <longkeyid> 1 0"
             # "ALREADY_SIGNED <long keyid>" <-- exit code 0
@@ -497,6 +500,7 @@ class GnuPG(object):
             self.STATE_BADPW,
             self.STATE_NOPW,
             self.STATE_NOAGENT,
+            self.STATE_INV_SGNR,
         }:
             return 'quit'
         elif self.state in {self.STATE_SIGN, self.STATE_GOODPW}:
@@ -512,6 +516,9 @@ class GnuPG(object):
     def _on_missing_passphrase(self):
         if self.state != self.STATE_NOAGENT:
             self.state = self.STATE_NOPW
+
+    def _on_INV_SGNR(self):
+        self.state = self.STATE_INV_SGNR
 
     def _on_good_passphrase(self):
         self.state = self.STATE_GOODPW
